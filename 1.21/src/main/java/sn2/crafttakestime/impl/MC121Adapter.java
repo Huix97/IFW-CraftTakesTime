@@ -3,13 +3,13 @@ package sn2.crafttakestime.impl;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.client.player.LocalPlayer;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
-import net.minecraftforge.fml.loading.FMLPaths;
-import net.minecraftforge.registries.ForgeRegistries;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.api.distmarker.OnlyIn;
+import net.neoforged.fml.loading.FMLPaths;
 import sn2.crafttakestime.ITimeCraftGuiContainer;
 import sn2.crafttakestime.common.config.ContainerConfig;
 import sn2.crafttakestime.common.core.ItemRegistry;
@@ -26,7 +26,7 @@ import java.util.List;
 import static sn2.crafttakestime.CraftTakesTime.MODID;
 
 public class MC121Adapter implements MinecraftAdapter {
-    private AbstractContainerScreen containerScreen;
+    private AbstractContainerScreen<?> containerScreen;
 
     @Override
     public Path getConfigPath() {
@@ -45,7 +45,7 @@ public class MC121Adapter implements MinecraftAdapter {
 
     @Override
     public void setContainerScreen(Object screen) {
-        this.containerScreen = (AbstractContainerScreen) screen;
+        this.containerScreen = (AbstractContainerScreen<?>) screen;
     }
 
     @Override
@@ -74,14 +74,11 @@ public class MC121Adapter implements MinecraftAdapter {
             return null;
         }
         Item item = this.containerScreen.getMenu().getSlot(slotIndex).getItem().getItem();
-        ResourceLocation resourceLocation = ForgeRegistries.ITEMS.getKey(item);
-        if (resourceLocation != null) {
-            return ItemRegistry.builder()
-                    .name(resourceLocation.toString())
-                    .modId(resourceLocation.getNamespace())
-                    .build();
-        }
-        return null;
+        ResourceLocation resourceLocation = BuiltInRegistries.ITEM.getKey(item);
+        return ItemRegistry.builder()
+                .name(resourceLocation.toString())
+                .modId(resourceLocation.getNamespace())
+                .build();
     }
 
     @Override
@@ -127,7 +124,7 @@ public class MC121Adapter implements MinecraftAdapter {
     public void playFinishSound() {
         LocalPlayer player = Minecraft.getInstance().player;
         if (player != null) {
-            player.playSound(SoundEventRegistry.finishSound.get(), 0.1F, 1f);
+            player.playSound(SoundEventRegistry.finishSound.value(), 0.1F, 1f);
         }
     }
 

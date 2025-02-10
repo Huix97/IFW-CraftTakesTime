@@ -1,21 +1,25 @@
 package sn2.crafttakestime.event;
 
+import net.minecraft.client.Minecraft;
 import net.minecraft.commands.Commands;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Player;
-import net.minecraftforge.event.RegisterCommandsEvent;
-import net.minecraftforge.event.TickEvent;
-import net.minecraftforge.event.entity.player.PlayerEvent;
-import net.minecraftforge.event.server.ServerStartedEvent;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod;
-import net.minecraftforge.network.PacketDistributor;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.EventBusSubscriber;
+import net.neoforged.neoforge.event.RegisterCommandsEvent;
+import net.neoforged.neoforge.event.entity.player.PlayerEvent;
+import net.neoforged.neoforge.event.server.ServerStartedEvent;
+import net.neoforged.neoforge.event.tick.PlayerTickEvent;
+import net.neoforged.neoforge.network.PacketDistributor;
 import sn2.crafttakestime.common.core.CraftManager;
+import sn2.crafttakestime.networking.CraftConfigPayload;
 import sn2.crafttakestime.networking.PacketCraftConfig;
 import sn2.crafttakestime.networking.TimeCraftPacketHandler;
 
-@Mod.EventBusSubscriber()
+import java.util.Objects;
+
+@EventBusSubscriber
 public class Events {
 
     @SubscribeEvent
@@ -25,16 +29,15 @@ public class Events {
 
     @SubscribeEvent
     public static void onPlayerLogin(PlayerEvent.PlayerLoggedInEvent event) {
-        Player player = event.getEntity();
-        PacketCraftConfig packet = new PacketCraftConfig(CraftManager.getInstance().getConfig());
-        TimeCraftPacketHandler.INSTANCE.send(
-                packet,
-                PacketDistributor.PLAYER.with((ServerPlayer) player));
+         if (event.getEntity() instanceof ServerPlayer serverPlayer) {
+             byte[] bytes = new PacketCraftConfig(CraftManager.getInstance().getConfig()).toBytes();
+             PacketDistributor.sendToPlayer(serverPlayer, new CraftConfigPayload(bytes));
+         }
     }
 
     @SubscribeEvent
-    public static void onPlayerTick(TickEvent.PlayerTickEvent event) {
-        if (event.side.isServer()) {
+    public static void onPlayerTick(PlayerTickEvent.Pre event) {
+        if (!event.getEntity().level().isClientSide()) {
             return;
         }
         CraftManager.getInstance().tick();
@@ -50,9 +53,7 @@ public class Events {
                                         .executes((commandSource) -> {
                                             CraftManager.getInstance().loadConfig();
                                             PacketCraftConfig packet = new PacketCraftConfig(CraftManager.getInstance().getConfig());
-                                            TimeCraftPacketHandler.INSTANCE.send(
-                                                    packet,
-                                                    PacketDistributor.ALL.noArg());
+                                            PacketDistributor.sendToAllPlayers(new CraftConfigPayload(packet.toBytes()));
                                             commandSource.getSource().sendSuccess(
                                                     () -> Component.literal("Config reloaded and send to all players"),
                                                     true);

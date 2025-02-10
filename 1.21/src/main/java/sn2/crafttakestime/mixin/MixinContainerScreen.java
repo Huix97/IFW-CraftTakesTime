@@ -12,6 +12,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
+import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
@@ -22,24 +23,18 @@ import sn2.crafttakestime.common.core.CraftManager;
 @Mixin(AbstractContainerScreen.class)
 public abstract class MixinContainerScreen<T extends AbstractContainerMenu> extends Screen implements ITimeCraftGuiContainer {
 
-    private static final Logger log = LogManager.getLogger(MixinContainerScreen.class);
-    private final AbstractContainerScreen<T> self = (AbstractContainerScreen<T>) (Object) this;
-    @Shadow
-    protected int leftPos;
-    @Shadow
-    protected int topPos;
-    private boolean finished = false;
+    @Unique
+    private static final Logger ifw_log = LogManager.getLogger(MixinContainerScreen.class);
+    @Unique
+    private final AbstractContainerScreen<T> ifw_self = (AbstractContainerScreen<T>) (Object) this;
 
-    protected MixinContainerScreen(Component p_96550_) {
-        super(p_96550_);
-    }
+    @Unique
+    private boolean ifw_finished = false;
 
-    @Shadow
-    protected abstract void slotClicked(Slot slotIn, int slotId, int mouseButton, ClickType type);
-
+    @Unique
     @Override
     public void handleCraftFinished(Slot slotIn, int slotId) {
-        this.finished = true;
+        this.ifw_finished = true;
         this.slotClicked(slotIn, slotId, 0, ClickType.PICKUP);
     }
 
@@ -77,7 +72,7 @@ public abstract class MixinContainerScreen<T extends AbstractContainerMenu> exte
                         containerConfig.getOverlayHeight());
             }
         } catch (Exception e) {
-            log.error("Failed to draw the crafting overlay", e);
+            ifw_log.error("Failed to draw the crafting overlay", e);
         }
     }
 
@@ -85,16 +80,16 @@ public abstract class MixinContainerScreen<T extends AbstractContainerMenu> exte
     public void crafttakestime$handleMouseClick(Slot slot, int invSlot, int clickData, ClickType actionType,
                                                 CallbackInfo info) {
         // Skip if the player is just finished crafting, so that the player can pick up the result item
-        if (finished) {
-            finished = false;
+        if (this.ifw_finished) {
+            this.ifw_finished = false;
             return;
         }
         try {
-            if (CraftManager.getInstance().initCraft(self, invSlot)) {
+            if (CraftManager.getInstance().initCraft(this.ifw_self, invSlot)) {
                 info.cancel();
             }
         } catch (Exception e) {
-            log.error("Failed to handle the mouse click", e);
+            ifw_log.error("Failed to handle the mouse click", e);
         }
     }
 
@@ -102,4 +97,14 @@ public abstract class MixinContainerScreen<T extends AbstractContainerMenu> exte
     public void crafttakestime$onClose(CallbackInfo ci) {
         CraftManager.getInstance().unsetGuiContainer();
     }
+
+    @Shadow
+    protected int leftPos;
+    @Shadow
+    protected int topPos;
+    protected MixinContainerScreen(Component p_96550_) {
+        super(p_96550_);
+    }
+    @Shadow
+    protected abstract void slotClicked(Slot slotIn, int slotId, int mouseButton, ClickType type);
 }

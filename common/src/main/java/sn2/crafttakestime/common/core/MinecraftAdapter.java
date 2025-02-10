@@ -6,6 +6,7 @@ import sn2.crafttakestime.common.slot.SlotRange;
 import java.nio.file.Path;
 import java.util.List;
 
+
 public interface MinecraftAdapter {
     // Config related
     Path getConfigPath();
