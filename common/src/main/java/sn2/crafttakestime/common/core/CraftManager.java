@@ -24,9 +24,6 @@ public class CraftManager {
     private float currentCraftTime = 0;
     private float craftPeriod = 0;
 
-    private CraftManager() {
-    }
-
     public static CraftManager getInstance() {
         if (INSTANCE == null) {
             INSTANCE = new CraftManager();
@@ -57,24 +54,22 @@ public class CraftManager {
                 .findFirst().orElse(DISABLED_CONTAINER);
     }
 
-    public boolean initCraft(Object gui, int invSlot) {
+    public boolean initCraft(Object gui, int slotId) {
         this.minecraftAdapter.setContainerScreen(gui);
         ContainerConfig containerConfig = this.getCraftContainerConfig();
         if (config.isDebug()) {
             log.info("Inv slot {}, gui class {}, containerConfig {}",
-                    invSlot,
+                    slotId,
                     this.minecraftAdapter.getContainerScreenClassName(),
                     containerConfig);
         }
 
-        if (!containerConfig.isEnabled()) {
-            return false;
-        }
+        if (!containerConfig.isEnabled()) return false;
 
         // Check if clicking the result slot
         int outputSlot = containerConfig.getOutputSlot();
-        if (invSlot != outputSlot) {
-            stopCraft();
+        if (slotId != outputSlot) {
+            this.stopCraft();
             return false;
         }
 
@@ -119,6 +114,7 @@ public class CraftManager {
             int outputSlot = containerConfig.getOutputSlot();
             SlotRange ingredientSlots = containerConfig.getIngredientSlots();
 
+            //FIX
             // Stop crafting if the result slot is empty
             if (this.minecraftAdapter.isSlotEmpty(outputSlot)) {
                 if (waitCounter < 5) {
@@ -160,9 +156,7 @@ public class CraftManager {
         }
     }
 
-    private float getCraftingTime(int outputSlot,
-                                  SlotRange ingredientSlots,
-                                  ContainerConfig containerConfig) {
+    private float getCraftingTime(int outputSlot, SlotRange ingredientSlots, ContainerConfig containerConfig) {
         // Global multiplier
         float globalMultiplier = config.getGlobalCraftingTimeMultiplier();
 
@@ -194,15 +188,12 @@ public class CraftManager {
         ItemRegistry outputRegistry = this.minecraftAdapter.getSlotItemRegistry(outputSlot);
         float outputMultiplier = 1F;
         if (outputRegistry != null) {
-            float modMultiplier = config.getOutputConfig().getModCraftingTimeMultipliers()
-                    .getOrDefault(outputRegistry.getModId(), 1F);
-            float itemMultiplier = config.getOutputConfig().getItemCraftingTimeMultipliers()
-                    .getOrDefault(outputRegistry.getName(), 1F);
+            float modMultiplier = config.getOutputConfig().getModCraftingTimeMultipliers().getOrDefault(outputRegistry.getModId(), 1F);
+            float itemMultiplier = config.getOutputConfig().getItemCraftingTimeMultipliers().getOrDefault(outputRegistry.getName(), 1F);
             outputMultiplier = modMultiplier * itemMultiplier;
         }
 
         // Final crafting time
-        return BASE_CRAFTING_TIME_PER_ITEM * ingredientDifficulty * outputMultiplier
-                * containerMultiplier * globalMultiplier;
+        return BASE_CRAFTING_TIME_PER_ITEM * ingredientDifficulty * outputMultiplier * containerMultiplier * globalMultiplier;
     }
 }

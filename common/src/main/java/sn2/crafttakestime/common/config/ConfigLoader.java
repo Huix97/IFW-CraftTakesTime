@@ -73,9 +73,13 @@ public class ConfigLoader {
                 .build();
 
         // add sample items
-        config.getIngredientConfig().getModCraftingTimeMultipliers().put("minecraft", 1F);
+        config.getIngredientConfig().getModCraftingTimeMultipliers().put("minecraft", 10.0F);
+        config.getOutputConfig().getModCraftingTimeMultipliers().put("minecraft", 10.0F);
+        config.getIngredientConfig().getModCraftingTimeMultipliers().put("ifw", 20.0F);
+        config.getOutputConfig().getModCraftingTimeMultipliers().put("ifw", 20.0F);
+
+        //ITEM
         config.getIngredientConfig().getItemCraftingTimeMultipliers().put("minecraft:stick", 1F);
-        config.getOutputConfig().getModCraftingTimeMultipliers().put("minecraft", 1F);
         config.getOutputConfig().getItemCraftingTimeMultipliers().put("minecraft:stick", 1F);
 
         // save to file
